@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Channel Simulation Parameters</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .parameter-group {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .parameter-group h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+            margin-right: 10px;
+        }
+        input[type="number"] {
+            width: 150px;
+            padding: 5px;
+        }
+        input[type="checkbox"] {
+            margin-left: 200px;
+        }
+        #command-line {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quantum Channel Simulation Parameters</h1>
+    
+    <form id="params-form">
+        <div class="parameter-group">
+            <h2>Alice's Parameters</h2>
+            <div class="form-group">
+                <label for="mu1">Signal state power (photons/pulse):</label>
+                <input type="number" id="mu1" name="mu1" value="0.1" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="mu2">Decoy state power (photons/pulse):</label>
+                <input type="number" id="mu2" name="mu2" value="0.05" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="p1">Probability of signal state:</label>
+                <input type="number" id="p1" name="p1" value="0.8" step="0.1" min="0" max="1">
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h2>Bob's Parameters</h2>
+            <div class="form-group">
+                <label for="dark-count">Dark count rate (counts/second):</label>
+                <input type="number" id="dark-count" name="dark-count" value="100">
+            </div>
+            <div class="form-group">
+                <label for="time-bin">Time bin width (seconds):</label>
+                <input type="number" id="time-bin" name="time-bin" value="100e-12" step="1e-12">
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h2>Channel Parameters</h2>
+            <div class="form-group">
+                <label for="loss">Channel loss (dB/km):</label>
+                <input type="number" id="loss" name="loss" value="0.2" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="length">Channel length (km):</label>
+                <input type="number" id="length" name="length" value="10" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="sync-error">Timing sync error (ps):</label>
+                <input type="number" id="sync-error" name="sync-error" value="0.1" step="0.1">
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h2>Processing Parameters</h2>
+            <div class="form-group">
+                <label for="block-size">Number of pulses per block:</label>
+                <input type="number" id="block-size" name="block-size" value="1000">
+            </div>
+            <div class="form-group">
+                <label for="max-offset">Maximum timing offset:</label>
+                <input type="number" id="max-offset" name="max-offset" value="50">
+            </div>
+        </div>
+
+        <div class="parameter-group">
+            <h2>Output Parameters</h2>
+            <div class="form-group">
+                <input type="checkbox" id="show-plots" name="show-plots">
+                <label for="show-plots">Show plots instead of saving to files</label>
+            </div>
+        </div>
+    </form>
+
+    <div class="parameter-group">
+        <h2>Generated Command Line</h2>
+        <div id="command-line"></div>
+    </div>
+
+    <script>
+        function updateCommandLine() {
+            const form = document.getElementById('params-form');
+            const formData = new FormData(form);
+            let cmd = "python3 src/main.py";
+
+            // Add all parameters except show-plots
+            for (let [key, value] of formData.entries()) {
+                if (key === 'show-plots') continue;
+                cmd += ` --${key} ${value}`;
+            }
+
+            // Add show-plots flag if checked
+            if (formData.get('show-plots')) {
+                cmd += " --show-plots";
+            }
+
+            document.getElementById('command-line').textContent = cmd;
+        }
+
+        // Add event listeners to all form elements
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', updateCommandLine);
+            input.addEventListener('input', updateCommandLine);
+        });
+
+        // Initial command line generation
+        updateCommandLine();
+    </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Channel Simulation</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .parameters {
+            flex: 1;
+            min-width: 300px;
+        }
+        .results {
+            flex: 2;
+        }
+        .parameter-section {
+            background: #f8f9fa;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .parameter-section h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .input-group small {
+            display: block;
+            color: #666;
+            font-size: 0.8em;
+            margin-top: 2px;
+        }
+        .input-group .unit {
+            color: #0056b3;
+            font-weight: bold;
+        }
+        .probability-display {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            padding: 5px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        .probability-bar {
+            height: 20px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        .signal-prob {
+            background: #007bff;
+        }
+        .decoy-prob {
+            background: #6c757d;
+        }
+        .chart-area {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            min-height: 600px;
+        }
+        .stats-container {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .stats-table td {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .stats-table td:first-child {
+            font-weight: bold;
+            color: #555;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .failure {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quantum Channel Simulation</h1>
+
+    <div class="container">
+        <div class="parameters">
+            <div class="parameter-section">
+                <h2>Alice Parameters</h2>
+                <div class="input-group">
+                    <label for="alice-mu1">Signal State Power:</label>
+                    <input type="number" id="alice-mu1" value="0.5" step="0.01" min="0" max="2">
+                    <small>Typical value: 0.5 <span class="unit">photons/pulse</span></small>
+                </div>
+                <div class="input-group">
+                    <label for="alice-mu2">Decoy State Power:</label>
+                    <input type="number" id="alice-mu2" value="0.25" step="0.01" min="0" max="1">
+                    <small>Typical value: 0.25 <span class="unit">photons/pulse</span></small>
+                </div>
+                <div class="input-group">
+                    <label for="alice-p1">Signal State Probability:</label>
+                    <input type="number" id="alice-p1" value="0.7" step="0.01" min="0" max="1" oninput="updateProbabilities()">
+                    <small>Probability of sending signal state (0-1)</small>
+                    <div class="probability-display">
+                        <div class="probability-bar signal-prob" style="width: 70%"></div>
+                        <div class="probability-bar decoy-prob" style="width: 30%"></div>
+                    </div>
+                    <small>Decoy state probability: <span id="decoy-prob">0.3</span></small>
+                </div>
+            </div>
+
+            <div class="parameter-section">
+                <h2>Bob Parameters</h2>
+                <div class="input-group">
+                    <label for="bob-dark-count">Dark Count Rate:</label>
+                    <input type="number" id="bob-dark-count" value="1000" step="100" min="0">
+                    <small>Typical value: 1000 <span class="unit">counts/second</span></small>
+                </div>
+                <div class="input-group">
+                    <label for="bob-time-bin">Time Bin Width:</label>
+                    <input type="number" id="bob-time-bin" value="100" step="10" min="10" max="1000">
+                    <small>Detection window (<span class="unit">picoseconds</span>)</small>
+                </div>
+            </div>
+
+            <div class="parameter-section">
+                <h2>Channel Parameters</h2>
+                <div class="input-group">
+                    <label for="channel-loss">Channel Loss:</label>
+                    <input type="number" id="channel-loss" value="-30" step="1" min="-100" max="0">
+                    <small>Typical range: -30 to -60 <span class="unit">dB</span></small>
+                </div>
+                <div class="input-group">
+                    <label for="channel-sync-error">Synchronization Error:</label>
+                    <input type="number" id="channel-sync-error" value="0" step="0.1" min="-10" max="10">
+                    <small>Clock error (±10 <span class="unit">parts per million</span>)</small>
+                </div>
+            </div>
+
+            <div class="parameter-section">
+                <h2>Processing Parameters</h2>
+                <div class="input-group">
+                    <label for="proc-block-size">Block Size:</label>
+                    <input type="number" id="proc-block-size" value="10000000" step="1000000" min="1000000">
+                    <small>Number of time bins to accumulate</small>
+                </div>
+                <div class="input-group">
+                    <label for="proc-max-offset">Maximum Clock Offset:</label>
+                    <input type="number" id="proc-max-offset" value="10000" step="1000" min="1000">
+                    <small>Maximum expected offset (<span class="unit">time bins</span>)</small>
+                </div>
+            </div>
+
+            <button onclick="runSimulation()">Run Simulation</button>
+        </div>
+
+        <div class="results">
+            <div class="chart-area">
+                <div id="chart-placeholder"></div>
+            </div>
+            <div id="simulation-stats"></div>
+        </div>
+    </div>
+
+    <script src="js/visualization.js"></script>
+    <script src="js/simulation.js"></script>
+    <script>
+        function updateProbabilities() {
+            const signalProb = parseFloat(document.getElementById('alice-p1').value);
+            if (isNaN(signalProb) || signalProb < 0 || signalProb > 1) return;
+            
+            const decoyProb = Math.round((1 - signalProb) * 100) / 100;
+            document.getElementById('decoy-prob').textContent = decoyProb;
+            
+            // Update probability bars
+            const signalBar = document.querySelector('.signal-prob');
+            const decoyBar = document.querySelector('.decoy-prob');
+            signalBar.style.width = `${signalProb * 100}%`;
+            decoyBar.style.width = `${decoyProb * 100}%`;
+        }
+
+        // Initialize probability display
+        updateProbabilities();
+    </script>
+</body>
+</html>
