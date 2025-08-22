@@ -1,0 +1,3 @@
+[submodule "TimeSync_decoy-BB84"]
+	path = TimeSync_decoy-BB84
+	url = git@github.com:VQCC-Satellite/TimeSync_decoy-BB84.git
