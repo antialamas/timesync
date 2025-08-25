@@ -8,21 +8,44 @@
 - Project requirements from user prompt
 - Best practices for scientific simulation software
 - Web interface design patterns
+- System architecture documentation
 
 ## Overview
-This project implements a modular quantum channel simulation system with a web-based user interface. The software allows users to simulate quantum communication scenarios by adjusting parameters related to Alice (sender), Bob (receiver), quantum channel characteristics, and signal processing configurations.
+This project implements a modular quantum channel simulation system with a web-based user interface. The software allows users to simulate quantum communication scenarios by adjusting parameters related to Alice (sender), Bob (receiver), quantum channel characteristics, and signal processing configurations. The system is split into two main simulation cores for enhanced modularity and testability.
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Web Interface] --> B[Configuration Manager]
-    B --> C[Simulation Engine]
-    C --> D[Results Generator]
-    D --> E[Visualization Engine]
-    E --> A
-    B --> F[Config Files]
-    D --> G[Output Files]
+    subgraph "Frontend"
+        A[Web Interface] --> B[Configuration Manager]
+    end
+
+    subgraph "Quantum States Generator Core"
+        C1[State Generator]
+        C2[Channel Effects]
+        C3[Detection Handler]
+        C1 --> C2 --> C3
+    end
+
+    subgraph "Synchronization Simulator Core"
+        D1[Data Preprocessor]
+        D2[Correlation Engine]
+        D3[Statistics Calculator]
+        D1 --> D2 --> D3
+    end
+
+    subgraph "Visualization"
+        E[Plot Generator]
+        F[Interactive Charts]
+    end
+
+    B --> C1
+    C3 --> D1
+    D3 --> E
+    E --> F --> A
+    B --> G[Config Files]
+    D3 --> H[Output Files]
 ```
 
 ### Components
@@ -36,36 +59,61 @@ graph TD
    - Interactive scientific charts
    - Real-time parameter validation
 
-2. **Backend System**
-   - Modular Python simulation engine
+2. **Quantum States Generator Core**
+   - State generation with configurable properties
+   - Channel effects simulation (loss, delay, noise)
+   - Detection event handling and recording
+   - Modular design for independent testing
+
+3. **Synchronization Simulator Core**
+   - Data preprocessing and filtering
+   - Correlation analysis engine
+   - Statistical calculations and metrics
+   - Independent operation with mock data support
+
+4. **Backend System**
    - Configuration file parser/generator
    - Command-line interface
    - Results processing pipeline
 
-3. **Data Flow**
+5. **Data Flow**
    - Web UI → Configuration file
-   - Configuration → Simulation engine
-   - Simulation → Results files
+   - Configuration → Quantum States Generator
+   - Generator → Synchronization Simulator
+   - Simulator → Results files
    - Results → Visualization
 
 ## Implementation Plan
 
-### Phase 1: Basic Structure
+### Phase 1: Core Modules Setup
+- Implement Quantum States Generator Core
+  - State generation module
+  - Channel effects module
+  - Detection handling module
+- Implement Synchronization Simulator Core
+  - Data preprocessing module
+  - Correlation engine
+  - Statistics calculator
+
+### Phase 2: Module Testing
+- Develop mock data generators
+- Create unit tests for each module
+- Implement integration tests between modules
+- Set up automated testing pipeline
+
+### Phase 3: Interface Development
 - Create HTML interface skeleton
 - Implement configuration file format
 - Set up basic Python project structure
-
-### Phase 2: Core Functionality
-- Develop simulation modules
-- Implement configuration parser
-- Create command-line interface
-
-### Phase 3: Integration
 - Connect web interface to backend
+
+### Phase 4: Integration
+- Connect Quantum States Generator to Synchronization Simulator
 - Implement visualization system
 - Add real-time parameter updates
+- End-to-end testing
 
-### Phase 4: Optimization
+### Phase 5: Optimization
 - Profile and optimize simulation modules
 - Implement caching system
 - Add parallel processing capabilities
@@ -78,10 +126,20 @@ project/
 │   ├── css/
 │   └── js/
 ├── src/
-│   ├── simulation/
+│   ├── quantum_core/
+│   │   ├── state_generator.py
+│   │   ├── channel_effects.py
+│   │   └── detection_handler.py
+│   ├── sync_core/
+│   │   ├── preprocessor.py
+│   │   ├── correlation.py
+│   │   └── statistics.py
 │   ├── config/
-│   └── processing/
+│   └── visualization/
 ├── tests/
+│   ├── quantum_core/
+│   ├── sync_core/
+│   └── integration/
 └── docs/
 ```
 
@@ -89,16 +147,19 @@ project/
 1. Web Interface: Open index.html in a browser
 2. Command Line: `python simulate.py --config input.yaml`
 3. Configuration files: YAML format with parameter definitions
+4. Mock Data Generation: `python generate_mock.py --type [quantum|sync]`
 
 ## Development
 - Python 3.8+
 - Modern web browser with JavaScript enabled
 - Scientific Python libraries (numpy, scipy)
 - Visualization libraries (plotly/chart.js)
+- Testing frameworks (pytest)
 
 ## Testing
-- Unit tests for simulation modules
-- Integration tests for configuration system
+- Unit tests for each module
+- Mock data generators for independent testing
+- Integration tests between cores
 - End-to-end tests for web interface
 
 ## Future Enhancements
@@ -106,3 +167,5 @@ project/
 - Additional visualization options
 - Real-time simulation updates
 - Parameter optimization tools
+- Extended mock data generation
+- Automated performance benchmarking
